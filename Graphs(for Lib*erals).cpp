@@ -1,4 +1,3 @@
-
 // Графы (жестка)
 
 //
@@ -8,7 +7,8 @@
 for(k = 0;k<n;k++)
         for(i = 0;i<n;i++)
             for(j = 0;j<n;j++)
-                d[i][j] = min(d[i][j], d[k][j]+d[i][k]);
+                if(d[i][k] < INF and d[k][j] < INF)
+                    d[i][j] = min(d[i][j], d[i][k]+d[k][j]);
 
 //
 Форд-беллман за n*m(Без отрицательных циклов, можно найти на nой операции)
@@ -165,7 +165,152 @@ ll dfs(ll x){
 
 reverse(ans);
 
-//
+
+// Поиск компонент сильной связности, построение конденсации графа
+
+vector < vector<int> > g, gr;
+vector<char> used;
+vector<int> order, component;
+ 
+void dfs1 (int v) {
+    used[v] = true;
+    for (size_t i=0; i<g[v].size(); ++i)
+        if (!used[ g[v][i] ])
+            dfs1 (g[v][i]);
+    order.push_back (v);
+}
+ 
+void dfs2 (int v) {
+    used[v] = true;
+    component.push_back (v);
+    for (size_t i=0; i<gr[v].size(); ++i)
+        if (!used[ gr[v][i] ])
+            dfs2 (gr[v][i]);
+}
+ 
+int main() {
+    int n;
+    ... чтение n ...
+    for (;;) {
+        int a, b;
+        ... чтение очередного ребра (a,b) ...
+        g[a].push_back (b);
+        gr[b].push_back (a);
+    }
+ 
+    used.assign (n, false);
+    for (int i=0; i<n; ++i)
+        if (!used[i])
+            dfs1 (i);
+    used.assign (n, false);
+    for (int i=0; i<n; ++i) {
+        int v = order[n-1-i];
+        if (!used[v]) {
+            dfs2 (v);
+            ... вывод очередной component ...
+            component.clear();
+        }
+    }
+}
 
 
+// мосты
+
+const int MAXN = ...;
+vector<int> g[MAXN];
+bool used[MAXN];
+int timer, tin[MAXN], fup[MAXN];
+ 
+void dfs (int v, int p = -1) {
+    used[v] = true;
+    tin[v] = fup[v] = timer++;
+    for (size_t i=0; i<g[v].size(); ++i) {
+        int to = g[v][i];
+        if (to == p)  continue;
+        if (used[to])
+            fup[v] = min (fup[v], tin[to]);
+        else {
+            dfs (to, v);
+            fup[v] = min (fup[v], fup[to]);
+            if (fup[to] > tin[v])
+                IS_BRIDGE(v,to);
+        }
+    }
+}
+ 
+void find_bridges() {
+    timer = 0;
+    for (int i=0; i<n; ++i)
+        used[i] = false;
+    for (int i=0; i<n; ++i)
+        if (!used[i])
+            dfs (i);
+}
+
+
+// шарниры
+
+vector<int> g[MAXN];
+bool used[MAXN];
+int timer, tin[MAXN], fup[MAXN];
+ 
+void dfs (int v, int p = -1) {
+    used[v] = true;
+    tin[v] = fup[v] = timer++;
+    int children = 0;
+    for (size_t i=0; i<g[v].size(); ++i) {
+        int to = g[v][i];
+        if (to == p)  continue;
+        if (used[to])
+            fup[v] = min (fup[v], tin[to]);
+        else {
+            dfs (to, v);
+            fup[v] = min (fup[v], fup[to]);
+            if (fup[to] >= tin[v] && p != -1)
+                IS_CUTPOINT(v);
+            ++children;
+        }
+    }
+    if (p == -1 && children > 1)
+        IS_CUTPOINT(v);
+}
+ 
+int main() {
+    int n;
+    ... чтение n и g ...
+ 
+    timer = 0;
+    for (int i=0; i<n; ++i)
+        used[i] = false;
+    dfs (0);
+}
+
+
+// двоичные подъемы
+
+ll up[SIZE][22];
+vector<ll> edges[SIZE];
+
+void hang(ll v = 1, ll p=0){
+    up[v][0] = p;
+    ll deg = 1;
+    
+    while(up[v][deg-1])
+        up[v][deg] = up[up[v][deg-1]][deg-1], deg++;
+    
+    for(auto u : edges[v])
+        if(u != p)
+            hang(u, v);
+}
+
+ll find(ll v, ll x){
+    ll deg = 0;
+    while(x){
+        if(x%2)
+            v = up[v][deg];
+        deg++;
+        x/=2;
+    }
+    return v;
+}
 

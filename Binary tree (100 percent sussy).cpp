@@ -25,7 +25,7 @@ ll sum(ll a, ll b){
     return ans;
 }
     
-ll add(ll ind, ll x){
+void add(ll ind, ll x){
     ind += n;
     tree[ind] += x;
     for(ind/=2;ind>=1;ind/=2){
@@ -213,6 +213,8 @@ void change(ll a, ll b, ll x, Node *k, ll l, ll r){
     build(k);
     update(k, l, r);
     //
+    
+    
     
     ll mid = (l+r)/2;
     
